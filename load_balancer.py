@@ -49,11 +49,8 @@ class RoundRobin:
         self.index = -1
 
     def select_server(self):
-        idx = (self.index + 1) % len(self.servers)
-        self.index = idx 
-
-        server = self.servers[idx]
-        
+        self.index = (self.index + 1) % len(self.servers)
+        server = self.servers[self.index]
         return server
 
     def update(self, *arg):
@@ -64,17 +61,12 @@ class RoundRobin:
 class LeastConnections:
     def __init__(self, servers):
         self.servers = servers
-        self.d={}
-        for server in self.servers:
-            self.d[server]=0
+        self.d = {server: 0 for server in servers}
 
     def select_server(self):
-        min=self.servers[0]
-        for server in self.d:
-            if self.d[server]<self.d[min]:
-                min=server
-        self.d[min]+=1
-        return min
+        min_server = min(self.d, key=self.d.get)
+        self.d[min_server] += 1
+        return min_server
 
     def update(self, *arg):
         self.d[arg[0]]-=1
@@ -96,13 +88,10 @@ class LeastResponseTime:
         t = time.time()
         for s in self.servers:
             self.avg[s]=(sum(self.historic[s])+self.d[s]-t)/(len(self.historic[s])+1)
-        
         mn=min([v for v in self.avg.values()])
         server=[s for s in self.servers if self.avg[s]==mn][0]
         self.d[server]=time.time()
-
         return server
-
 
     def update(self, *arg):
         self.historic[arg[0]].append(time.time()-self.d[arg[0]])
